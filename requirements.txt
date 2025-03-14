@@ -1,0 +1,4 @@
+gin framework
+CompileDeamon: debug
+godotenv: use .env file
+go orm: use orm to connect to database instead of raw sql
