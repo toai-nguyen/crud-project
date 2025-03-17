@@ -86,8 +86,8 @@ func SendEmail(c *gin.Context) {
 	toEmailAddress := RequestBody.Receiver
 	to := []string{toEmailAddress}
 
-	host := os.Getenv("")
-	port := "587"
+	host := os.Getenv("EMAIL_HOST")
+	port := os.Getenv("EMAIL_POST")
 
 	address := host + ":" + port
 
