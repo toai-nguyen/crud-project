@@ -12,7 +12,7 @@ func init() {
 
 func main() {
 	userRoutes := routes.InitUserRoutes()
-	bookRoutes := routes.InitBookRoutes()
+	// bookRoutes := routes.InitBookRoutes()
 	userRoutes.Run()
-	bookRoutes.Run()
+	// bookRoutes.Run()
 }

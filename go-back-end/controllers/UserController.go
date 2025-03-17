@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"net/smtp"
+	"os"
+
 	"example.com/go-back-end/config"
 	"example.com/go-back-end/models"
 	"github.com/gin-gonic/gin"
@@ -67,4 +70,44 @@ func UserDelete(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "User deleted",
 	})
+}
+func SendEmail(c *gin.Context) {
+	var RequestBody struct {
+		Subject  string `json:"subject" binding:"required"`
+		Body     string `json:"body" binding:"required"`
+		Receiver string `json:"receiver" binding:"required"`
+	}
+	from := os.Getenv("SENDER")
+	password := os.Getenv("PASSWORD")
+	// host := os.Getenv("EMAIL_HOST")
+
+	c.Bind(&RequestBody)
+
+	toEmailAddress := RequestBody.Receiver
+	to := []string{toEmailAddress}
+
+	host := "smtp.gmail.com"
+	port := "587"
+
+	address := host + ":" + port
+
+	headers := "From: " + from + "\r\n" +
+		"To: " + RequestBody.Receiver + "\r\n" +
+		"Subject: " + RequestBody.Subject + "\r\n"
+	mess := []byte(headers + RequestBody.Body)
+
+	auth := smtp.PlainAuth("", from, password, host)
+
+	err := smtp.SendMail(address, auth, from, to, mess)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"messsage": err,
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "sending to email",
+	})
+
 }
