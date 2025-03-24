@@ -4,8 +4,9 @@ import "gorm.io/gorm"
 
 type Book struct {
 	gorm.Model
-	ID       string `json:"id"`
 	Title    string `json:"title"`
+	Price    uint   `json:"price"`
+	Quantity uint   `json:"quantity"`
+	Status   string `json:"status"`
 	AuthorID uint   `json:"author_id"`
-	Author   User   `json:"author" gorm:"foreignKey:AuthorID"`
 }

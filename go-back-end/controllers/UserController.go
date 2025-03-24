@@ -1,73 +1,103 @@
 package controllers
 
 import (
+	"net/http"
 	"net/smtp"
 	"os"
 
-	"example.com/go-back-end/config"
-	"example.com/go-back-end/models"
+	"example.com/go-back-end/dto/request"
+	"example.com/go-back-end/dto/response"
+	"example.com/go-back-end/services"
 	"github.com/gin-gonic/gin"
 )
 
-func UserIndex(c *gin.Context) {
-	var users []models.User
-	config.DB.Find(&users)
-	c.JSON(200, gin.H{
-		"users": users,
+type UserController struct {
+	userService *services.UserService
+}
+
+func NewUserController(userService *services.UserService) *UserController {
+	return &UserController{
+		userService: userService,
+	}
+}
+
+func (ctrl *UserController) Index(c *gin.Context) {
+	users, err := ctrl.userService.GetAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var userResponses []response.UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, response.FromUser(user))
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"users": userResponses,
 	})
 }
-func UserCreate(c *gin.Context) {
 
-	var RequestBody struct {
-		Name  string `json:"name" binding:"required"`
-		Email string `json:"email" binding:"required"`
+func (ctrl *UserController) Create(c *gin.Context) {
+	var req request.CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-	c.Bind(&RequestBody)
-	user := models.User{
-		Name:  RequestBody.Name,
-		Email: RequestBody.Email,
+
+	user, err := ctrl.userService.CreateUser(req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-	result := config.DB.Create(&user)
-	if result.Error != nil {
-		c.Status(400)
-	}
-	c.JSON(200, gin.H{
+
+	c.JSON(http.StatusOK, gin.H{
 		"message": "User created",
-		"user":    user,
+		"user":    response.FromUser(user),
 	})
 }
-func UserShow(c *gin.Context) {
-	id := c.Param("id")
-	var user models.User
-	config.DB.First(&user, id)
-	c.JSON(200, gin.H{
-		"user": user,
-	})
-}
-func UserUpdate(c *gin.Context) {
-	id := c.Param("id")
-	var user models.User
-	config.DB.First(&user, id)
-	var RequestBody struct {
-		Name  string `json:"name" binding:"required"`
-		Email string `json:"email" binding:"required"`
-	}
-	c.Bind(&RequestBody)
-	user.Name = RequestBody.Name
-	user.Email = RequestBody.Email
 
-	config.DB.Save(&user)
-	c.JSON(200, gin.H{
-		"message": "User updated",
-		"user":    user,
+func (ctrl *UserController) ShowById(c *gin.Context) {
+	id := c.Param("id")
+	user, err := ctrl.userService.GetUserByID(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": response.FromUser(user),
 	})
 }
-func UserDelete(c *gin.Context) {
+
+func (ctrl *UserController) Update(c *gin.Context) {
 	id := c.Param("id")
-	var user models.User
-	config.DB.First(&user, id)
-	config.DB.Delete(&user)
-	c.JSON(200, gin.H{
+	var req request.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := ctrl.userService.UpdateUser(id, req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User updated",
+		"user":    response.FromUser(user),
+	})
+}
+func (ctrl *UserController) Delete(c *gin.Context) {
+	id := c.Param("id")
+	err := ctrl.userService.DeleteUser(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
 		"message": "User deleted",
 	})
 }

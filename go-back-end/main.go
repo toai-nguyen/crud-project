@@ -3,6 +3,7 @@ package main
 import (
 	"example.com/go-back-end/config"
 	"example.com/go-back-end/routes"
+	"github.com/gin-gonic/gin"
 )
 
 func init() {
@@ -11,8 +12,11 @@ func init() {
 }
 
 func main() {
-	userRoutes := routes.InitUserRoutes()
-	// bookRoutes := routes.InitBookRoutes()
-	userRoutes.Run()
-	// bookRoutes.Run()
+	r := gin.Default()
+
+	routes.InitBookRoutes(r)
+	routes.InitUserRoutes(r)
+
+	r.Run()
+
 }
